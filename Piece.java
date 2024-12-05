@@ -4,12 +4,18 @@ public abstract class Piece{
     private ArrayList<int[]> movementRange;
     private int[] coords = new int[2]; //will be somehting like "23"
     private String name;
+    private final boolean pawnMove, diagonal, orthogonal, knightMove, kingMove;
 
-    public Piece(int player, int[] coords, String name, boolean pawnMove, boolean diagonal, boolean orthogonally, boolean hopMove){
+    public Piece(int player, int[] coords, String name, boolean pawnMove, boolean diagonal, boolean orthogonal, boolean knightMove, boolean kingMove){
         this.player = player; //1 is on bottom (white), 2 is on top (black)
         this.movementRange = new ArrayList<>();
         this.coords = coords;
         this.name = name; //first letter should be cap
+        this.pawnMove = pawnMove;
+        this.diagonal = diagonal;
+        this.orthogonal = orthogonal;
+        this.knightMove = knightMove;
+        this.kingMove = kingMove;
     }
     public int getX(){
         return this.coords[0];
@@ -37,9 +43,9 @@ public abstract class Piece{
         int testX;
         int testY;
         for (int i = 0; i < 4; i++) {
-            testX = getX();
-            testY = getY();
-            while (c.inBoard(testX-1, testY-1) && c.inBoard(testX+1, testY+1)) { 
+            testX = this.getX();
+            testY = this.getY();
+            while (c.inBoard(testX, testY) && c.inBoard(testX, testY)) { 
                 switch (i) {
                     case 0: //checking bottom right
                         testX++;
@@ -59,9 +65,15 @@ public abstract class Piece{
                     default:
                         throw new AssertionError();
                 }
-                this.addMovementRange(testX, testY);
-                if (c.isOccupied(testX, testY)){
-                    break;
+                if(c.inBoard(testX, testY)){
+                    if (c.isOccupied(testX, testY)){//a piece in the way stops the movement
+                        if(c.returnOwner(testX, testY) != this.player){
+                            this.addMovementRange(testX, testY);//allow capture if is enemy piece
+                        }
+                        break;
+                    } else {
+                        this.addMovementRange(testX, testY);
+                    }
                 }
                 
             }
@@ -72,9 +84,9 @@ public abstract class Piece{
         int testX;
         int testY;
         for (int i = 0; i < 4; i++) {
-            testX = getX();
-            testY = getY();
-            while (c.inBoard(testX-1, testY-1) && c.inBoard(testX+1, testY+1)) { 
+            testX = this.getX();
+            testY = this.getY();
+            while (c.inBoard(testX, testY) && c.inBoard(testX, testY)) { 
                 switch (i) {
                     case 0: //checking right
                         testX++;
@@ -91,36 +103,72 @@ public abstract class Piece{
                     default:
                         throw new AssertionError();
                 }
-                this.addMovementRange(testX, testY);
-                if (c.isOccupied(testX, testY)){
-                    break;
+                if(c.inBoard(testX, testY)){
+                    if (c.isOccupied(testX, testY)){
+                        if(c.returnOwner(testX, testY) != this.player){
+                            this.addMovementRange(testX, testY);
+                        }
+                        break;
+                    } else {
+                        this.addMovementRange(testX, testY);
+                    }
                 }
                 
             }
         }
         
     }
+    public int alterPawnY(){
+        if(this.player == 1){
+            return -1;
+        }
+        return 1;
+    }
     public void calculatePawnRange(ChessGame c){
-        int testX = getX();
-        int testY = getY();
-        if (this.player == 1){ //pawns move up the board so subtract from y
-            testX--;
-            testY--;
-            //this is for capturing
-            if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
-                this.addMovementRange(testX, testY); //check upper left diagonal
+        int testX = this.getX();
+        int testY = this.getY();
+
+        testX--;
+        testY += alterPawnY();
+        //this is for capturing
+        if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
+            this.addMovementRange(testX, testY); //check upper left diagonal
+        }
+        testX = this.getX() + 1;
+        if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
+            this.addMovementRange(testX, testY); //check upper right diagonal
+        }
+        testX = this.getX();
+        testY = this.getY() + alterPawnY();
+        if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY)){//this is for pushing
+            this.addMovementRange(testX, testY);
+            testY += alterPawnY();
+            
+            if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY)){
+                if((this.player == 1 && this.getY() == 6)||(this.player == 2 && this.getY() == 1)){
+                    this.addMovementRange(testX, testY);//check if pawn can move 2 squares
+                }
             }
-            testX += 2;
-            if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
-                this.addMovementRange(testX, testY); //check upper right diagonal
-            }
-            testX = getX();
-            testY = getY() - 1;
-            if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY)){//this is for pushing
-                this.addMovementRange(testX, testY);
-                testY--;
-                if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY) && getY() == 6){
-                    this.addMovementRange(testX, testY);
+        }
+    }
+    public void calculateKnightRange(ChessGame c) {
+        int[][] tests = {
+        {this.getX()-1, this.getY()-2},
+        {this.getX()+1, this.getY()-2},
+        {this.getX()+2, this.getY()-1},
+        {this.getX()+2, this.getY()+1},
+        {this.getX()+1, this.getY()+2},
+        {this.getX()-1, this.getY()+2},
+        {this.getX()-2, this.getY()-1},
+        {this.getX()-2, this.getY()+1}};
+        for(int[] test : tests){
+            if (c.inBoard(test[0], test[1])){
+                if (c.isOccupied(test[0], test[1])){
+                    if(c.returnOwner(test[0], test[1]) != this.player){
+                        this.addMovementRange(test[0], test[1]);
+                    }
+                } else {
+                    this.addMovementRange(test[0], test[1]);
                 }
             }
         }
