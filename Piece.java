@@ -1,21 +1,17 @@
 import java.util.ArrayList;
-public abstract class Piece{
+public class Piece{
     private int player;
     private ArrayList<int[]> movementRange;
-    private int[] coords = new int[2]; //will be somehting like "23"
+    private int[] coords = new int[2]; //will be somehting like [2, 3]
     private String name;
-    private final boolean pawnMove, diagonal, orthogonal, knightMove, kingMove;
+    private final String movements;
 
-    public Piece(int player, int[] coords, String name, boolean pawnMove, boolean diagonal, boolean orthogonal, boolean knightMove, boolean kingMove){
+    public Piece(int player, int[] coords, String name, String movements){
         this.player = player; //1 is on bottom (white), 2 is on top (black)
         this.movementRange = new ArrayList<>();
         this.coords = coords;
         this.name = name; //first letter should be cap
-        this.pawnMove = pawnMove;
-        this.diagonal = diagonal;
-        this.orthogonal = orthogonal;
-        this.knightMove = knightMove;
-        this.kingMove = kingMove;
+        this.movements = movements;
     }
     public int getX(){
         return this.coords[0];
@@ -26,18 +22,37 @@ public abstract class Piece{
     public String getName(){
         return this.name;
     }
-    public char getLetter(){
-        return this.name.charAt(0);
+    public String getLetter(){
+        return this.name.substring(0,1);
     }
     public int getPlayer(){
         return this.player;
+    }
+    public ArrayList<int[]> getMovementRange(ChessGame c){
+        clearMovementRange();
+        calculateMovementRange(c);
+        return this.movementRange;
     }
     public void addMovementRange(int testX, int testY){
         int[] newCoord = {testX, testY};
         this.movementRange.add(newCoord);
     }
-    public void calculateMovementRange(){
-
+    public void calculateMovementRange(ChessGame c){
+        if(this.movements.contains("p")){
+            calculatePawnRange(c);
+        }
+        if(this.movements.contains("d")){
+            calculateDiagonalRange(c);
+        }
+        if(this.movements.contains("o")){
+            calculateOrthogonalRange(c);
+        }
+        if(this.movements.contains("n") || this.movements.contains("k")){
+            calculateKRange(c);
+        }
+    }
+    public void clearMovementRange(){
+        this.movementRange.removeAll(this.movementRange);
     }
     public void calculateDiagonalRange(ChessGame c){//for bishop and queen
         int testX;
@@ -45,7 +60,7 @@ public abstract class Piece{
         for (int i = 0; i < 4; i++) {
             testX = this.getX();
             testY = this.getY();
-            while (c.inBoard(testX, testY) && c.inBoard(testX, testY)) { 
+            while (c.inBoard(testX, testY)) { 
                 switch (i) {
                     case 0: //checking bottom right
                         testX++;
@@ -86,7 +101,7 @@ public abstract class Piece{
         for (int i = 0; i < 4; i++) {
             testX = this.getX();
             testY = this.getY();
-            while (c.inBoard(testX, testY) && c.inBoard(testX, testY)) { 
+            while (c.inBoard(testX, testY)) { 
                 switch (i) {
                     case 0: //checking right
                         testX++;
@@ -125,6 +140,7 @@ public abstract class Piece{
         return 1;
     }
     public void calculatePawnRange(ChessGame c){
+        System.out.println("calculating pawn range");
         int testX = this.getX();
         int testY = this.getY();
 
@@ -151,16 +167,37 @@ public abstract class Piece{
             }
         }
     }
-    public void calculateKnightRange(ChessGame c) {
+    public int[][] returnKnightTests(){
         int[][] tests = {
-        {this.getX()-1, this.getY()-2},
-        {this.getX()+1, this.getY()-2},
-        {this.getX()+2, this.getY()-1},
-        {this.getX()+2, this.getY()+1},
-        {this.getX()+1, this.getY()+2},
-        {this.getX()-1, this.getY()+2},
-        {this.getX()-2, this.getY()-1},
-        {this.getX()-2, this.getY()+1}};
+            {this.getX()-1, this.getY()-2},
+            {this.getX()+1, this.getY()-2},
+            {this.getX()+2, this.getY()-1},
+            {this.getX()+2, this.getY()+1},
+            {this.getX()+1, this.getY()+2},
+            {this.getX()-1, this.getY()+2},
+            {this.getX()-2, this.getY()-1},
+            {this.getX()-2, this.getY()+1}};
+        return tests;
+    }
+    public int[][] returnKingTests(){
+        int[][] tests = {
+            {this.getX()-1, this.getY()-1},
+            {this.getX(), this.getY()-1},
+            {this.getX()+1, this.getY()-1},
+            {this.getX()+1, this.getY()},
+            {this.getX()+1, this.getY()+1},
+            {this.getX(), this.getY()+1},
+            {this.getX()-1, this.getY()+1},
+            {this.getX()-1, this.getY()}};
+        return tests;
+    }
+    public void calculateKRange(ChessGame c) {
+        int[][] tests;
+        if (this.movementRange.contains("n")){
+            tests = returnKnightTests();
+        } else {
+            tests = returnKingTests();
+        }
         for(int[] test : tests){
             if (c.inBoard(test[0], test[1])){
                 if (c.isOccupied(test[0], test[1])){
@@ -172,5 +209,9 @@ public abstract class Piece{
                 }
             }
         }
+    }
+    @Override
+    public String toString(){
+        return this.name + " at " + this.getX() + ", " + this.getY() + ", owned by Player " + this.player;
     }
 }
