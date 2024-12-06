@@ -121,7 +121,8 @@ public class ChessGame{
         createPiece(1, 7, 7, "Rook");
         playGame();
     }
-    public void displayBoard(ArrayList<int[]> movementRange, int pieceX, int pieceY){
+    public void displayBoard(Piece piece){
+        clearConsole();
         System.out.println("   1  2  3  4  5  6  7  8\n");
         String mes, mod, col;
         for (int y = 0; y < CHESSBOARDLENGTH; y++) {
@@ -131,6 +132,9 @@ public class ChessGame{
                 mod = "normal";
                 col = "white";
                 int[] coord = {x, y};
+                if(piece != null && piece.getX() == coord[0] && piece.getY() == coord[1]){
+                    mod = "underline";
+                }
                 if(isOccupied(x, y)){//if there is a piece there
                     if(this.chessboard[y][x].getPlayer() == 1){//set default color
                         col = "blue";
@@ -139,9 +143,12 @@ public class ChessGame{
                     }
                     mes = " " + this.chessboard[y][x].getLetter() + " ";
                 }
-                for (int elem = 0; elem < movementRange.size(); elem++) {
-                    if(Arrays.equals(movementRange.get(elem), coord)){
-                        col = "green"; //green the available movement squares
+                if(piece != null){
+                    ArrayList<int[]> movementRange = piece.getMovementRange(this);
+                    for (int elem = 0; elem < movementRange.size(); elem++) {
+                        if(Arrays.equals(movementRange.get(elem), coord)){
+                            col = "green"; //green the available movement squares
+                        }
                     }
                 }
                 cprint(mes, col, mod);
@@ -150,20 +157,24 @@ public class ChessGame{
         }
     }
     public void displayBoard(){
-        ArrayList<int[]> empty = new ArrayList<>();
-        displayBoard(empty, -1, -1);
+        displayBoard(null);
     }
     public boolean isOccupied(int x, int y){
         //returns false if nothing is there
         return this.chessboard[y][x] != null;
     }
     public int returnOwner(int x, int y){
-        return this.chessboard[y][x].getPlayer();
+        try {
+            return this.chessboard[y][x].getPlayer();
+        } catch (NullPointerException e) {
+            System.err.println(e);
+            return -1;
+        }
+        
     }
     public void playGame(){
         int currentPlayer = 1;
         while (true) {
-            this.clearConsole();
             this.displayBoard();
             this.doTurn(currentPlayer);
             if (currentPlayer == 1){
@@ -174,10 +185,25 @@ public class ChessGame{
         }
     }
     public void doTurn(int currentPlayer){
+        System.out.println("Player " + currentPlayer + " turn:\nSelect a piece by typing it's 2 number coordinate (1-8)\ne.g. 1 4");
+        int[] coord;
+        do { //select piece
+            coord = getUserCoord(true);
+        } while (returnOwner(coord[0], coord[1]) != currentPlayer);
+        Piece selectedPiece = chessboard[coord[1]][coord[0]];
+        do { //select where to move piece
+            
+            this.displayBoard(selectedPiece);
+            System.out.println("here aslo");
+            coord = getUserCoord(false);
+            System.out.println("got here");
+        } while (!selectedPiece.inMovementRange(coord[0], coord[1]));
+        selectedPiece.move(coord, this);
+    }
+    public int[] getUserCoord(boolean occupied){
         String input = "";
         int x = -1;
         int y = -1;
-        System.out.println("Player " + currentPlayer + " turn:\nSelect a piece by typing it's 2 number coordinate (1-8)\ne.g. 1 4");
         do {
             try {
                 input = scanner.nextLine();
@@ -187,16 +213,12 @@ public class ChessGame{
             }
             
         } while (!inBoard(x, y)//the y is too large (player can type 1-8 inclusive)
-                || !isOccupied(x, y) //an empty spot is selected
-                || returnOwner(x, y) != currentPlayer  //player does not own the piece
+                || (occupied && !isOccupied(x, y)) //an empty spot is selected
                 || input.length() != 3 //the input is the wrong length
                 || input.charAt(1) != ' ' //the middle char is not a space
-                //|| !this.chessboard[y][x].getMovementRange(this).isEmpty()
                 );
-        
-        Piece selectedPiece = chessboard[y][x];
         clearConsole();
-        displayBoard(selectedPiece.getMovementRange(this), selectedPiece.getX(), selectedPiece.getY());
-        int var = scanner.nextInt();
+        int[] coord = {x, y};
+        return coord;
     }
 }

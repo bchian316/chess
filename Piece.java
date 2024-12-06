@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 public class Piece{
     private int player;
     private ArrayList<int[]> movementRange;
@@ -32,6 +33,15 @@ public class Piece{
         clearMovementRange();
         calculateMovementRange(c);
         return this.movementRange;
+    }
+    public boolean inMovementRange(int x, int y){
+        int[] coord = {x, y};
+        for (int elem = 0; elem < movementRange.size(); elem++) {
+            if(Arrays.equals(movementRange.get(elem), coord)){
+                return true; //green the available movement squares
+            }
+        }
+        return false;
     }
     public void addMovementRange(int testX, int testY){
         int[] newCoord = {testX, testY};
@@ -77,6 +87,7 @@ public class Piece{
                     case 3: //checking bottom left
                         testX--;
                         testY++;
+                        break;
                     default:
                         throw new AssertionError();
                 }
@@ -192,7 +203,7 @@ public class Piece{
     }
     public void calculateKRange(ChessGame c) {
         int[][] tests;
-        if (this.movementRange.contains("n")){
+        if (this.movements.contains("n")){
             tests = returnKnightTests();
         } else {
             tests = returnKingTests();
@@ -212,5 +223,10 @@ public class Piece{
     @Override
     public String toString(){
         return this.name + " at " + this.getX() + ", " + this.getY() + ", owned by Player " + this.player;
+    }
+    public void move(int[] coord, ChessGame c){
+        c.chessboard[this.coords[1]][this.coords[0]] = null;
+        this.coords = coord;
+        c.chessboard[this.coords[1]][this.coords[0]] = this;
     }
 }
