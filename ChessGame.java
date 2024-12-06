@@ -138,8 +138,6 @@ public class ChessGame{
                         col = "red";
                     }
                     mes = " " + this.chessboard[y][x].getLetter() + " ";
-                } else {//for empty spaces
-                    mes = " O ";
                 }
                 for (int elem = 0; elem < movementRange.size(); elem++) {
                     if(Arrays.equals(movementRange.get(elem), coord)){
@@ -165,7 +163,7 @@ public class ChessGame{
     public void playGame(){
         int currentPlayer = 1;
         while (true) {
-            //this.clearConsole();
+            this.clearConsole();
             this.displayBoard();
             this.doTurn(currentPlayer);
             if (currentPlayer == 1){

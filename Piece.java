@@ -140,7 +140,6 @@ public class Piece{
         return 1;
     }
     public void calculatePawnRange(ChessGame c){
-        System.out.println("calculating pawn range");
         int testX = this.getX();
         int testY = this.getY();
 
