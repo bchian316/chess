@@ -12,8 +12,6 @@ public class ChessGame{
     public ChessGame(){
         this.chessboard = new Piece[CHESSBOARDLENGTH][CHESSBOARDLENGTH];
         scanner = new Scanner(System.in);
-        //chessboard[y][x]
-        this.startGame();
     }
     public static void clearConsole() {
         try {
@@ -55,18 +53,22 @@ public class ChessGame{
         }
         switch (modifier) {
             case "normal":
-                modifier = "0";
+                modifier = "0;";
                 break;
             case "bold":
-                modifier = "1";
+                modifier = "1;";
                 break;
             case "italic":
-                modifier = "3";
+                modifier = "3;";
                 break;
             case "underline":
-                modifier = "4";
+                modifier = "4;";
+                break;
+            case "background":
+                modifier = "";
+                color = Integer.toString(Integer.parseInt(color)+10);
         }
-        System.out.print("\033["+modifier+";"+color+"m"+message+"\033[0m");
+        System.out.print("\033["+modifier+color+"m"+message+"\033[0m");
     }
     public boolean inBoard(int x, int y){
         return x >= 0 && x < ChessGame.CHESSBOARDLENGTH && y >= 0 && y < ChessGame.CHESSBOARDLENGTH;
@@ -123,51 +125,54 @@ public class ChessGame{
     }
     public void displayBoard(Piece piece){
         clearConsole();
-        System.out.println("   1  2  3  4  5  6  7  8\n");
+        cprint("  1  2  3  4  5  6  7  8\n", "white", "bold");
         String mes, mod, col;
         for (int y = 0; y < CHESSBOARDLENGTH; y++) {
-            System.out.print((y+1) + " ");
+            cprint(Integer.toString(y+1), "white", "bold");
             for (int x = 0; x < CHESSBOARDLENGTH; x++) {
-                mes = " O ";
+                mes = " - ";
                 mod = "normal";
                 col = "white";
                 int[] coord = {x, y};
                 if(piece != null && piece.getX() == coord[0] && piece.getY() == coord[1]){
-                    mod = "underline";
+                    mod = "background";
                 }
                 if(isOccupied(x, y)){//if there is a piece there
-                    if(this.chessboard[y][x].getPlayer() == 1){//set default color
-                        col = "blue";
+                    if(getPiece(x, y).getPlayer() == 1){//set default color
+                        col = "blue";//p1 is blue
                     } else {
-                        col = "red";
+                        col = "red";//p2 is red
                     }
-                    mes = " " + this.chessboard[y][x].getLetter() + " ";
+                    mes = " " + getPiece(x, y).getLetter() + " ";
                 }
                 if(piece != null){
-                    ArrayList<int[]> movementRange = piece.getMovementRange(this);
+                    ArrayList<int[]> movementRange = piece.calculateMovementRange(this);
                     for (int elem = 0; elem < movementRange.size(); elem++) {
                         if(Arrays.equals(movementRange.get(elem), coord)){
+                            mod = "background";
                             col = "green"; //green the available movement squares
                         }
                     }
                 }
                 cprint(mes, col, mod);
             }
-            System.out.println("\n");
+            System.out.println();
         }
     }
     public void displayBoard(){
         displayBoard(null);
     }
+    public Piece getPiece(int x, int y){
+        return this.chessboard[y][x];
+    }
     public boolean isOccupied(int x, int y){
         //returns false if nothing is there
-        return this.chessboard[y][x] != null;
+        return getPiece(x, y) != null;
     }
     public int returnOwner(int x, int y){
         try {
-            return this.chessboard[y][x].getPlayer();
+            return getPiece(x, y).getPlayer();
         } catch (NullPointerException e) {
-            System.err.println(e);
             return -1;
         }
         
@@ -185,18 +190,16 @@ public class ChessGame{
         }
     }
     public void doTurn(int currentPlayer){
-        System.out.println("Player " + currentPlayer + " turn:\nSelect a piece by typing it's 2 number coordinate (1-8)\ne.g. 1 4");
+        System.out.println("Player " + currentPlayer + " turn:\nSelect a piece by typing it's 2 number coordinate (1-8) - e.g. 1 4");
         int[] coord;
         do { //select piece
-            coord = getUserCoord(true);
+            coord = getUserCoord(true);//crashes program if the piece cant move anywhere
         } while (returnOwner(coord[0], coord[1]) != currentPlayer);
-        Piece selectedPiece = chessboard[coord[1]][coord[0]];
+        Piece selectedPiece = getPiece(coord[0], coord[1]);
         do { //select where to move piece
             
             this.displayBoard(selectedPiece);
-            System.out.println("here aslo");
             coord = getUserCoord(false);
-            System.out.println("got here");
         } while (!selectedPiece.inMovementRange(coord[0], coord[1]));
         selectedPiece.move(coord, this);
     }

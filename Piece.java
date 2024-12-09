@@ -1,10 +1,10 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 public class Piece{
-    private int player;
-    private ArrayList<int[]> movementRange;
+    private final int player;
+    private final ArrayList<int[]> movementRange;
     private int[] coords = new int[2]; //will be somehting like [2, 3]
-    private String name;
+    private final String name;
     private final String movements;
 
     public Piece(int player, int[] coords, String name, String movements){
@@ -30,8 +30,6 @@ public class Piece{
         return this.player;
     }
     public ArrayList<int[]> getMovementRange(ChessGame c){
-        clearMovementRange();
-        calculateMovementRange(c);
         return this.movementRange;
     }
     public boolean inMovementRange(int x, int y){
@@ -47,92 +45,87 @@ public class Piece{
         int[] newCoord = {testX, testY};
         this.movementRange.add(newCoord);
     }
-    public void calculateMovementRange(ChessGame c){
+    public ArrayList<int[]> calculateMovementRange(ChessGame c){
+        clearMovementRange();
         if(this.movements.contains("p")){
             calculatePawnRange(c);
         }
         if(this.movements.contains("d")){
-            calculateDiagonalRange(c);
+            calculateODRange(c, 'd');
         }
         if(this.movements.contains("o")){
-            calculateOrthogonalRange(c);
+            calculateODRange(c, 'o');
         }
         if(this.movements.contains("n") || this.movements.contains("k")){
             calculateKRange(c);
         }
+        return this.movementRange;
     }
     public void clearMovementRange(){
         this.movementRange.removeAll(this.movementRange);
     }
-    public void calculateDiagonalRange(ChessGame c){//for bishop and queen
+    public int[] returnODTest(int c, char d){
+        int[] test = new int[2];
+        if(d == 'd'){
+            switch (c) {//for diagonal
+                case 0: //checking bottom right
+                    test[0] = 1;
+                    test[1] = 1;
+                    break;
+                case 1: //checking top right
+                    test[0] = 1;
+                    test[1] = -1;
+                    break;
+                case 2: //checking top left
+                    test[0] = -1;
+                    test[1] = -1;
+                    break;
+                case 3: //checking bottom left
+                    test[0] = -1;
+                    test[1] = 1;
+                    break;
+                default:
+                    throw new AssertionError("case has to be 0, 1, 2, or 3");
+            }
+        } else {//for orthogonal
+            switch (c) {
+                case 0: //checking bottom right
+                    test[0] = 1;
+                    test[1] = 0;
+                    break;
+                case 1: //checking top right
+                    test[0] = -1;
+                    test[1] = 0;
+                    break;
+                case 2: //checking top left
+                    test[0] = 0;
+                    test[1] = -1;
+                    break;
+                case 3: //checking bottom left
+                    test[0] = 0;
+                    test[1] = 1;
+                    break;
+                default:
+                    throw new AssertionError("case has to be 0, 1, 2, or 3");
+            }
+        }
+        return test;
+    }
+    public void calculateODRange(ChessGame c, char d){//for bishop and queen
         int testX;
         int testY;
+        int[] test;
         for (int i = 0; i < 4; i++) {
             testX = this.getX();
             testY = this.getY();
-            while (c.inBoard(testX, testY)) { 
-                switch (i) {
-                    case 0: //checking bottom right
-                        testX++;
-                        testY++;
-                        break;
-                    case 1: //checking top right
-                        testX++;
-                        testY--;
-                        break;
-                    case 2: //checking top left
-                        testX--;
-                        testY--;
-                        break;
-                    case 3: //checking bottom left
-                        testX--;
-                        testY++;
-                        break;
-                    default:
-                        throw new AssertionError();
-                }
+            while (c.inBoard(testX, testY)) {
+                test = returnODTest(i, d);
+                testX += test[0];
+                testY += test[1];
                 if(c.inBoard(testX, testY)){
                     if (c.isOccupied(testX, testY)){//a piece in the way stops the movement
                         if(c.returnOwner(testX, testY) != this.player){
                             this.addMovementRange(testX, testY);//allow capture if is enemy piece
-                        }
-                        break;
-                    } else {
-                        this.addMovementRange(testX, testY);
-                    }
-                }
-                
-            }
-        }
-        
-    }
-    public void calculateOrthogonalRange(ChessGame c){//for bishop and queen
-        int testX;
-        int testY;
-        for (int i = 0; i < 4; i++) {
-            testX = this.getX();
-            testY = this.getY();
-            while (c.inBoard(testX, testY)) { 
-                switch (i) {
-                    case 0: //checking right
-                        testX++;
-                        break;
-                    case 1: //checking left
-                        testX--;
-                        break;
-                    case 2: //checking up
-                        testY++;
-                        break;
-                    case 3: //checking down
-                        testY--;
-                        break;
-                    default:
-                        throw new AssertionError();
-                }
-                if(c.inBoard(testX, testY)){
-                    if (c.isOccupied(testX, testY)){
-                        if(c.returnOwner(testX, testY) != this.player){
-                            this.addMovementRange(testX, testY);
                         }
                         break;
                     } else {
