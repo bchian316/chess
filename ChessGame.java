@@ -121,6 +121,7 @@ public class ChessGame{
         createPiece(1, 5, 7, "Bishop");
         createPiece(1, 6, 7, "Night");
         createPiece(1, 7, 7, "Rook");
+
         playGame();
     }
     public void displayBoard(Piece piece){
@@ -223,5 +224,32 @@ public class ChessGame{
         clearConsole();
         int[] coord = {x, y};
         return coord;
+    }
+    public void promotePawn(Piece p){
+        char playerChoice = ' ';
+        do { 
+            System.out.println("Choose promotion: (Q)ueen, (R)ook, (B)ishop, (K)night");
+            playerChoice = scanner.nextLine().toLowerCase().charAt(0);
+        } while (playerChoice != 'q' && playerChoice != 'b' && playerChoice != 'r' && playerChoice != 'k');
+        switch (playerChoice) {
+            case 'q':
+                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Queen", "od");
+                break;
+            case 'r':
+                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Rook", "o");
+                break;
+            case 'b':
+                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Bishop", "d");
+                break;
+            case 'k':
+                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Knight", "n");
+                break;
+            default:
+                throw new AssertionError();
+        }
+    }
+    public boolean inCheck(Piece checkingPiece, int[] kingCoords){
+        checkingPiece.calculateMovementRange(this);
+        return (checkingPiece.inMovementRange(kingCoords[0], kingCoords[1]));
     }
 }

@@ -29,6 +29,9 @@ public class Piece{
     public int getPlayer(){
         return this.player;
     }
+    public int[] getCoords(){
+        return this.coords;
+    }
     public ArrayList<int[]> getMovementRange(ChessGame c){
         return this.movementRange;
     }
@@ -221,5 +224,10 @@ public class Piece{
         c.chessboard[this.coords[1]][this.coords[0]] = null;
         this.coords = coord;
         c.chessboard[this.coords[1]][this.coords[0]] = this;
+        if("Pawn".equals(this.name)){
+            if((this.player == 1 && getY() == 0) || (this.player == 2 && getY() == 7)){
+                c.promotePawn(this);
+            }
+        }
     }
 }
