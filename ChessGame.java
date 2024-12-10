@@ -220,6 +220,7 @@ public class ChessGame{
                 || (occupied && !isOccupied(x, y)) //an empty spot is selected
                 || input.length() != 3 //the input is the wrong length
                 || input.charAt(1) != ' ' //the middle char is not a space
+                || (occupied && getPiece(x, y).calculateMovementRange(this).isEmpty()) //piece cannot move
                 );
         clearConsole();
         int[] coord = {x, y};
@@ -247,6 +248,16 @@ public class ChessGame{
             default:
                 throw new AssertionError();
         }
+    }
+    public void castleMoveRook(Piece king, int side){
+        //assume that rook and king are already at correct places
+        //side is either 1 or -1
+        if(side == 1){
+            this.getPiece(7, king.getY()).move(5, king.getY(), this);
+        } else {
+            this.getPiece(0, king.getY()).move(3, king.getY(), this);
+        }
+        king.changeCastle();
     }
     public boolean inCheck(Piece checkingPiece, int[] kingCoords){
         checkingPiece.calculateMovementRange(this);

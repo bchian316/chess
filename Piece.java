@@ -6,6 +6,7 @@ public class Piece{
     private int[] coords = new int[2]; //will be somehting like [2, 3]
     private final String name;
     private final String movements;
+    private boolean castled;
 
     public Piece(int player, int[] coords, String name, String movements){
         this.player = player; //1 is on bottom (white), 2 is on top (black)
@@ -13,12 +14,17 @@ public class Piece{
         this.coords = coords;
         this.name = name; //first letter should be cap
         this.movements = movements;
+        this.castled = false; //only for kings
     }
+    //some getters
     public int getX(){
         return this.coords[0];
     }
     public int getY(){
         return this.coords[1];
+    }
+    public int[] getCoords(){
+        return this.coords;
     }
     public String getName(){
         return this.name;
@@ -29,12 +35,10 @@ public class Piece{
     public int getPlayer(){
         return this.player;
     }
-    public int[] getCoords(){
-        return this.coords;
-    }
     public ArrayList<int[]> getMovementRange(ChessGame c){
         return this.movementRange;
     }
+    //important public methods
     public boolean inMovementRange(int x, int y){
         int[] coord = {x, y};
         for (int elem = 0; elem < movementRange.size(); elem++) {
@@ -43,10 +47,6 @@ public class Piece{
             }
         }
         return false;
-    }
-    public void addMovementRange(int testX, int testY){
-        int[] newCoord = {testX, testY};
-        this.movementRange.add(newCoord);
     }
     public ArrayList<int[]> calculateMovementRange(ChessGame c){
         clearMovementRange();
@@ -64,10 +64,43 @@ public class Piece{
         }
         return this.movementRange;
     }
-    public void clearMovementRange(){
+    @Override
+    public String toString(){
+        return this.name + " at " + this.getX() + ", " + this.getY() + ", owned by Player " + this.player;
+    }
+    public void move(int[] coord, ChessGame c){
+        if("King".equals(this.name) && Math.abs(coord[0] - this.coords[0]) == 2){ //check if king moved 2 squares
+            if(coord[0] - this.coords[0] > 0){ //castling right
+                c.castleMoveRook(this, 1);
+            } else { //castling left
+                c.castleMoveRook(this, -1);
+            }
+        }
+        c.chessboard[this.coords[1]][this.coords[0]] = null;
+        this.coords = coord;
+        c.chessboard[this.coords[1]][this.coords[0]] = this;
+        if("Pawn".equals(this.name)){
+            if((this.player == 1 && getY() == 0) || (this.player == 2 && getY() == 7)){
+                c.promotePawn(this);
+            }
+        }
+    }
+    public void changeCastle(){
+        this.castled = true;
+    }
+    public void move(int x, int y, ChessGame c){
+        int[] newCoords = {x, y};
+        move(newCoords, c);
+    }
+    //private methods below only for calculating movement
+    private void addMovementRange(int testX, int testY){
+        int[] newCoord = {testX, testY};
+        this.movementRange.add(newCoord);
+    }
+    private void clearMovementRange(){
         this.movementRange.removeAll(this.movementRange);
     }
-    public int[] returnODTest(int c, char d){
+    private int[] returnODTest(int c, char d){
         int[] test = new int[2];
         if(d == 'd'){
             switch (c) {//for diagonal
@@ -114,7 +147,7 @@ public class Piece{
         }
         return test;
     }
-    public void calculateODRange(ChessGame c, char d){//for bishop and queen
+    private void calculateODRange(ChessGame c, char d){//for bishop and queen and rook
         int testX;
         int testY;
         int[] test;
@@ -140,13 +173,13 @@ public class Piece{
         }
         
     }
-    public int alterPawnY(){
+    private int alterPawnY(){
         if(this.player == 1){
             return -1;
         }
         return 1;
     }
-    public void calculatePawnRange(ChessGame c){
+    private void calculatePawnRange(ChessGame c){
         int testX = this.getX();
         int testY = this.getY();
 
@@ -173,7 +206,7 @@ public class Piece{
             }
         }
     }
-    public int[][] returnKnightTests(){
+    private int[][] returnKnightTests(){
         int[][] tests = {
             {this.getX()-1, this.getY()-2},
             {this.getX()+1, this.getY()-2},
@@ -185,24 +218,64 @@ public class Piece{
             {this.getX()-2, this.getY()+1}};
         return tests;
     }
-    public int[][] returnKingTests(){
-        int[][] tests = {
-            {this.getX()-1, this.getY()-1},
-            {this.getX(), this.getY()-1},
-            {this.getX()+1, this.getY()-1},
-            {this.getX()+1, this.getY()},
-            {this.getX()+1, this.getY()+1},
-            {this.getX(), this.getY()+1},
-            {this.getX()-1, this.getY()+1},
-            {this.getX()-1, this.getY()}};
-        return tests;
+    private int[][] returnKingTests(boolean castled){
+        if(castled){
+            int[][] tests = {
+                {this.getX()-1, this.getY()-1},
+                {this.getX(), this.getY()-1},
+                {this.getX()+1, this.getY()-1},
+                {this.getX()+1, this.getY()},
+                {this.getX()+1, this.getY()+1},
+                {this.getX(), this.getY()+1},
+                {this.getX()-1, this.getY()+1},
+                {this.getX()-1, this.getY()}};
+            return tests;
+        } else {
+            int[][] tests = {
+                {this.getX()-1, this.getY()-1},
+                {this.getX(), this.getY()-1},
+                {this.getX()+1, this.getY()-1},
+                {this.getX()+1, this.getY()},
+                {this.getX()+1, this.getY()+1},
+                {this.getX(), this.getY()+1},
+                {this.getX()-1, this.getY()+1},
+                {this.getX()-1, this.getY()},
+                {this.getX()-2, this.getY()},
+                {this.getX()+2, this.getY()}};
+            return tests;
+        }
     }
-    public void calculateKRange(ChessGame c) {
+    private boolean canCastle(int side, ChessGame c){
+        //side is positive or negative, ONLY FOR KINGS
+        if(!this.castled){//king hasnt castled yet
+            if(this.getX() != 4 || (this.getY() != 0 && this.getY() != 7)){//king is in wrong place
+            } else {
+                //king is in right place
+                if(side > 0){//test kingside castle
+                    if (c.isOccupied(7, this.getY()) && c.getPiece(7, this.getY()).getName().equals("Rook")
+                            && !c.isOccupied(6, this.getY())
+                            && !c.isOccupied(5, this.getY())){//if rook is in corner and no pieces in the way
+                        return true;
+                    }
+                } else if(side < 0){//test queenside castle
+                    if (c.isOccupied(0, this.getY()) && c.getPiece(0, this.getY()).getName().equals("Rook")
+                            && !c.isOccupied(1, this.getY())
+                            && !c.isOccupied(2, this.getY())
+                            && !c.isOccupied(3, this.getY())){//if rook is in corner and no pieces in the way
+                        return true;
+                    }
+                }
+            }
+            
+        }
+        return false;
+    }
+    private void calculateKRange(ChessGame c) {
         int[][] tests;
         if (this.movements.contains("n")){
             tests = returnKnightTests();
         } else {
-            tests = returnKingTests();
+            tests = returnKingTests(this.castled);
         }
         for(int[] test : tests){
             if (c.inBoard(test[0], test[1])){
@@ -211,22 +284,16 @@ public class Piece{
                         this.addMovementRange(test[0], test[1]);
                     }
                 } else {
-                    this.addMovementRange(test[0], test[1]);
+                    if(this.getName().equals("King") && Math.abs(test[0] - this.getX()) == 2){
+                        //we are checking a castle test
+                        if(canCastle(test[0] - this.getX(), c)){
+                            this.addMovementRange(test[0], test[1]);
+                        }
+                    } else{//we are checking a normal test
+                        this.addMovementRange(test[0], test[1]);
+                    }
+                    
                 }
-            }
-        }
-    }
-    @Override
-    public String toString(){
-        return this.name + " at " + this.getX() + ", " + this.getY() + ", owned by Player " + this.player;
-    }
-    public void move(int[] coord, ChessGame c){
-        c.chessboard[this.coords[1]][this.coords[0]] = null;
-        this.coords = coord;
-        c.chessboard[this.coords[1]][this.coords[0]] = this;
-        if("Pawn".equals(this.name)){
-            if((this.player == 1 && getY() == 0) || (this.player == 2 && getY() == 7)){
-                c.promotePawn(this);
             }
         }
     }
