@@ -12,6 +12,17 @@ public class ChessGame{
     public ChessGame(){
         this.chessboard = new Piece[CHESSBOARDLENGTH][CHESSBOARDLENGTH];
         scanner = new Scanner(System.in);
+        System.out.println("Welcome to Chess!");
+        System.out.println("This is a simplified version of Chess without checks and checkmate.");
+        System.out.println("All you have to do is capture the enemy King without losing your own!");
+        System.out.println("Move pieces by first selecting the piece's coordinate using chess notation");
+        System.out.println("Then, type the coordinate of your desired move");
+    }
+    public int getOppositePlayer(int player){
+        if(player == 1){
+            return 2;
+        }
+        return 1;
     }
     public static void clearConsole() {
         try {
@@ -94,6 +105,8 @@ public class ChessGame{
             case "King":
                 movement = "k";
                 break;
+            default:
+                throw new AssertionError("Must pass in Night, King, Bishop, Queen, Rook, or Pawn");
         }
         int[] coords = {x, y};
         this.chessboard[y][x] = new Piece(player, coords, name, movement);
@@ -126,10 +139,9 @@ public class ChessGame{
     }
     public void displayBoard(Piece piece){
         clearConsole();
-        cprint("  1  2  3  4  5  6  7  8\n", "white", "bold");
         String mes, mod, col;
         for (int y = 0; y < CHESSBOARDLENGTH; y++) {
-            cprint(Integer.toString(y+1), "white", "bold");
+            cprint(Integer.toString(CHESSBOARDLENGTH-y) + " ", "white", "bold");
             for (int x = 0; x < CHESSBOARDLENGTH; x++) {
                 mes = " - ";
                 mod = "normal";
@@ -159,6 +171,7 @@ public class ChessGame{
             }
             System.out.println();
         }
+        cprint("   a  b  c  d  e  f  g  h\n", "white", "bold");
     }
     public void displayBoard(){
         displayBoard(null);
@@ -183,67 +196,72 @@ public class ChessGame{
         while (true) {
             this.displayBoard();
             this.doTurn(currentPlayer);
-            if (currentPlayer == 1){
-                currentPlayer = 2;
-            } else {
-                currentPlayer = 1;
-            }
+            currentPlayer = getOppositePlayer(currentPlayer);
         }
     }
     public void doTurn(int currentPlayer){
-        System.out.println("Player " + currentPlayer + " turn:\nSelect a piece by typing it's 2 number coordinate (1-8) - e.g. 1 4");
         int[] coord;
         do { //select piece
-            coord = getUserCoord(true);//crashes program if the piece cant move anywhere
+            coord = getUserCoord(currentPlayer, "Player " + currentPlayer + " turn:\nSelect a piece by typing it's coordinate", null);
         } while (returnOwner(coord[0], coord[1]) != currentPlayer);
         Piece selectedPiece = getPiece(coord[0], coord[1]);
+
         do { //select where to move piece
-            
-            this.displayBoard(selectedPiece);
-            coord = getUserCoord(false);
-        } while (!selectedPiece.inMovementRange(coord[0], coord[1]));
+            coord = getUserCoord(0, "Player " + currentPlayer + " turn:\nType the coordinate of where you want to move", selectedPiece);
+            if(isOccupied(coord[0], coord[1]) && getPiece(coord[0], coord[1]).getPlayer() == currentPlayer){
+                selectedPiece = getPiece(coord[0], coord[1]);
+            }
+        } while (!selectedPiece.inMovementRange(coord[0], coord[1]));//this allows deselecting because a friendly piece will never be in another friendly piece's movement range
         selectedPiece.move(coord, this);
+        if(selectedPiece.getName().equals("King")){
+            selectedPiece.changeCastle();//any king move will prohibit castling
+        }
+        this.getEnemyKing(currentPlayer);//check if enemy king is captured
+        
     }
-    public int[] getUserCoord(boolean occupied){
+    public int[] getUserCoord(int occupied, String prompt, Piece selectedPiece){
+        //if occupied is 0, then we can select any space
+        // if it is 1 or 2 then we have to select a space with a piece there owned by the player
         String input = "";
         int x = -1;
         int y = -1;
         do {
+            displayBoard(selectedPiece);
+            System.out.println(prompt);
             try {
                 input = scanner.nextLine();
-                x = Integer.parseInt(input.substring(0, 1)) - 1;
-                y = Integer.parseInt(input.substring(2, 3)) - 1;
+                x = (input.charAt(0) - 'a');
+                y = CHESSBOARDLENGTH - Integer.parseInt(input.substring(1, 2));
             } catch (NumberFormatException | StringIndexOutOfBoundsException | ArrayIndexOutOfBoundsException | NoSuchElementException e){
             }
             
-        } while (!inBoard(x, y)//the y is too large (player can type 1-8 inclusive)
-                || (occupied && !isOccupied(x, y)) //an empty spot is selected
-                || input.length() != 3 //the input is the wrong length
-                || input.charAt(1) != ' ' //the middle char is not a space
-                || (occupied && getPiece(x, y).calculateMovementRange(this).isEmpty()) //piece cannot move
+        } while (input.length() != 2 //the input is the wrong length
+                || !inBoard(x, y)//the y is too large (player can type 1-8 inclusive)
+                || (occupied != 0 && !isOccupied(x, y)) //an empty spot is selected
+                || (occupied != 0 && getPiece(x, y).getPlayer() != occupied)//if u try to select ur opponent's piece
                 );
-        clearConsole();
         int[] coord = {x, y};
         return coord;
     }
     public void promotePawn(Piece p){
-        char playerChoice = ' ';
-        do { 
-            System.out.println("Choose promotion: (Q)ueen, (R)ook, (B)ishop, (K)night");
+        char playerChoice = ' ';//we create an entirely new piece so we dont have to make setters :)
+        displayBoard();
+        System.out.println("Choose promotion: (Q)ueen, (R)ook, (B)ishop, (K)night");
+        do {
             playerChoice = scanner.nextLine().toLowerCase().charAt(0);
         } while (playerChoice != 'q' && playerChoice != 'b' && playerChoice != 'r' && playerChoice != 'k');
         switch (playerChoice) {
             case 'q':
-                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Queen", "od");
+                createPiece(p.getPlayer(), p.getX(), p.getY(), "Queen");
                 break;
             case 'r':
-                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Rook", "o");
+                createPiece(p.getPlayer(), p.getX(), p.getY(), "Rook");
                 break;
             case 'b':
-                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Bishop", "d");
+                createPiece(p.getPlayer(), p.getX(), p.getY(), "Bishop");
                 break;
             case 'k':
-                chessboard[p.getY()][p.getX()] = new Piece(p.getPlayer(), p.getCoords(), "Knight", "n");
+                createPiece(p.getPlayer(), p.getX(), p.getY(), "Night");
                 break;
             default:
                 throw new AssertionError();
@@ -257,10 +275,19 @@ public class ChessGame{
         } else {
             this.getPiece(0, king.getY()).move(3, king.getY(), this);
         }
-        king.changeCastle();
     }
-    public boolean inCheck(Piece checkingPiece, int[] kingCoords){
-        checkingPiece.calculateMovementRange(this);
-        return (checkingPiece.inMovementRange(kingCoords[0], kingCoords[1]));
+    
+    public Piece getEnemyKing(int player){ //this gets the king of the opposite player
+        for (Piece[] row : chessboard) {
+            for (Piece p : row) {
+                if(p != null && p.getName().equals("King") && p.getPlayer() != player){
+                    return p;
+                }
+            }
+        }
+        displayBoard();
+        System.out.println("Player " + player + " WINS!!! yay");
+        System.exit(0);
+        return null; //this line will not be executed
     }
 }

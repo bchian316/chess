@@ -186,20 +186,20 @@ public class Piece{
         testX--;
         testY += alterPawnY();
         //this is for capturing
-        if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
+        if(c.inBoard(testX, testY) && c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
             this.addMovementRange(testX, testY); //check upper left diagonal
         }
         testX = this.getX() + 1;
-        if(c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
+        if(c.inBoard(testX, testY) && c.isOccupied(testX, testY) && c.returnOwner(testX, testY) != this.player && c.inBoard(testX, testY)){
             this.addMovementRange(testX, testY); //check upper right diagonal
         }
         testX = this.getX();
         testY = this.getY() + alterPawnY();
-        if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY)){//this is for pushing
+        if(c.inBoard(testX, testY) && !(c.isOccupied(testX, testY))){//this is for pushing
             this.addMovementRange(testX, testY);
             testY += alterPawnY();
             
-            if(!(c.isOccupied(testX, testY)) && c.inBoard(testX, testY)){
+            if(c.inBoard(testX, testY) && !(c.isOccupied(testX, testY))){
                 if((this.player == 1 && this.getY() == 6)||(this.player == 2 && this.getY() == 1)){
                     this.addMovementRange(testX, testY);//check if pawn can move 2 squares
                 }
