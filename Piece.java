@@ -104,45 +104,52 @@ public class Piece{
         int[] test = new int[2];
         if(d == 'd'){
             switch (c) {//for diagonal
-                case 0: //checking bottom right
+                case 0 -> {
+                    //checking bottom right
                     test[0] = 1;
                     test[1] = 1;
-                    break;
-                case 1: //checking top right
+                }
+                case 1 -> {
+                    //checking top right
                     test[0] = 1;
                     test[1] = -1;
-                    break;
-                case 2: //checking top left
+                }
+                case 2 -> {
+                    //checking top left
                     test[0] = -1;
                     test[1] = -1;
-                    break;
-                case 3: //checking bottom left
+                }
+                case 3 -> {
+                    //checking bottom left
                     test[0] = -1;
                     test[1] = 1;
-                    break;
-                default:
-                    throw new AssertionError("case has to be 0, 1, 2, or 3");
+                }
+                default -> throw new AssertionError("case has to be 0, 1, 2, or 3");
             }
-        } else {//for orthogonal
+            //for diagonal
+                    } else {//for orthogonal
             switch (c) {
-                case 0: //checking bottom right
+                case 0 -> {
+                    //checking bottom right
                     test[0] = 1;
                     test[1] = 0;
-                    break;
-                case 1: //checking top right
+                }
+                case 1 -> {
+                    //checking top right
                     test[0] = -1;
                     test[1] = 0;
-                    break;
-                case 2: //checking top left
+                }
+                case 2 -> {
+                    //checking top left
                     test[0] = 0;
                     test[1] = -1;
-                    break;
-                case 3: //checking bottom left
+                }
+                case 3 -> {
+                    //checking bottom left
                     test[0] = 0;
                     test[1] = 1;
-                    break;
-                default:
-                    throw new AssertionError("case has to be 0, 1, 2, or 3");
+                }
+                default -> throw new AssertionError("case has to be 0, 1, 2, or 3");
             }
         }
         return test;
@@ -266,7 +273,6 @@ public class Piece{
                     }
                 }
             }
-            
         }
         return false;
     }

@@ -12,11 +12,18 @@ public class ChessGame{
     public ChessGame(){
         this.chessboard = new Piece[CHESSBOARDLENGTH][CHESSBOARDLENGTH];
         scanner = new Scanner(System.in);
+        this.printInstructions();
+    }
+    public final void printInstructions(){
+        clearConsole();
         System.out.println("Welcome to Chess!");
-        System.out.println("This is a simplified version of Chess without checks and checkmate.");
+        System.out.println("This is a simplified 2-player version of Chess without checks and checkmate.");
+        System.out.println("Player 1 is blue, Player 2 is red.");
         System.out.println("All you have to do is capture the enemy King without losing your own!");
-        System.out.println("Move pieces by first selecting the piece's coordinate using chess notation");
-        System.out.println("Then, type the coordinate of your desired move");
+        System.out.println("Move pieces by first selecting the piece's coordinate using chess notation.");
+        System.out.println("Then, type the coordinate of your desired move!");
+        System.out.println("Enter any word to continue");
+        scanner.next();
     }
     public int getOppositePlayer(int player){
         if(player == 1){
@@ -37,47 +44,24 @@ public class ChessGame{
     }
     public static void cprint(String message, String color, String modifier){
         switch (color) {
-            case "black":
-                color = "30";
-                break;
-            case "red":
-                color = "31";
-                break;
-            case "green":
-                color = "32";
-                break;
-            case "yellow":
-                color = "33";
-                break;
-            case "blue":
-                color = "34";
-                break;
-            case "purple":
-                color = "35";
-                break;
-            case "cyan":
-                color = "36";
-                break;
-            case "white":
-                color = "37";
-                break;
+            case "black" -> color = "30";
+            case "red" -> color = "31";
+            case "green" -> color = "32";
+            case "yellow" -> color = "33";
+            case "blue" -> color = "34";
+            case "purple" -> color = "35";
+            case "cyan" -> color = "36";
+            case "white" -> color = "37";
         }
         switch (modifier) {
-            case "normal":
-                modifier = "0;";
-                break;
-            case "bold":
-                modifier = "1;";
-                break;
-            case "italic":
-                modifier = "3;";
-                break;
-            case "underline":
-                modifier = "4;";
-                break;
-            case "background":
+            case "normal" -> modifier = "0;";
+            case "bold" -> modifier = "1;";
+            case "italic" -> modifier = "3;";
+            case "underline" -> modifier = "4;";
+            case "background" -> {
                 modifier = "";
                 color = Integer.toString(Integer.parseInt(color)+10);
+            }
         }
         System.out.print("\033["+modifier+color+"m"+message+"\033[0m");
     }
@@ -87,26 +71,13 @@ public class ChessGame{
     public void createPiece(int player, int x, int y, String name){
         String movement = "";
         switch (name) {
-            case "Pawn":
-                movement = "p";
-                break;
-            case "Bishop":
-                movement = "d";
-                break;
-            case "Rook":
-                movement = "o";
-                break;
-            case "Queen":
-                movement = "do";
-                break;
-            case "Night":
-                movement = "n";
-                break;
-            case "King":
-                movement = "k";
-                break;
-            default:
-                throw new AssertionError("Must pass in Night, King, Bishop, Queen, Rook, or Pawn");
+            case "Pawn" -> movement = "p";
+            case "Bishop" -> movement = "d";
+            case "Rook" -> movement = "o";
+            case "Queen" -> movement = "do";
+            case "Night" -> movement = "n";
+            case "King" -> movement = "k";
+            default -> throw new AssertionError("Must pass in Night, King, Bishop, Queen, Rook, or Pawn");
         }
         int[] coords = {x, y};
         this.chessboard[y][x] = new Piece(player, coords, name, movement);
@@ -251,20 +222,11 @@ public class ChessGame{
             playerChoice = scanner.nextLine().toLowerCase().charAt(0);
         } while (playerChoice != 'q' && playerChoice != 'b' && playerChoice != 'r' && playerChoice != 'k');
         switch (playerChoice) {
-            case 'q':
-                createPiece(p.getPlayer(), p.getX(), p.getY(), "Queen");
-                break;
-            case 'r':
-                createPiece(p.getPlayer(), p.getX(), p.getY(), "Rook");
-                break;
-            case 'b':
-                createPiece(p.getPlayer(), p.getX(), p.getY(), "Bishop");
-                break;
-            case 'k':
-                createPiece(p.getPlayer(), p.getX(), p.getY(), "Night");
-                break;
-            default:
-                throw new AssertionError();
+            case 'q' -> createPiece(p.getPlayer(), p.getX(), p.getY(), "Queen");
+            case 'r' -> createPiece(p.getPlayer(), p.getX(), p.getY(), "Rook");
+            case 'b' -> createPiece(p.getPlayer(), p.getX(), p.getY(), "Bishop");
+            case 'k' -> createPiece(p.getPlayer(), p.getX(), p.getY(), "Night");
+            default -> throw new AssertionError();
         }
     }
     public void castleMoveRook(Piece king, int side){
